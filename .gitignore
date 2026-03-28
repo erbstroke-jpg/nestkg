@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+*.env
+!.env.example
+
+# Uploads (keep dirs)
+backend/uploads/avatars/*
+backend/uploads/listings/*
+backend/uploads/attachments/*
+!backend/uploads/**/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# Flutter
+flutter_app/.dart_tool/
+flutter_app/.packages
+flutter_app/build/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+mysql_data/

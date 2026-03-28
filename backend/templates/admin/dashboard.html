@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% set active_page = "dashboard" %}
+{% set now = now if now is defined else none %}
+
+{% block title %}Дашборд — NestKG Admin{% endblock %}
+{% block page_title %}Дашборд{% endblock %}
+
+{% block content %}
+{% set now = namespace(val=none) %}
+
+<!-- Stats Row 1: Users -->
+<div class="row g-3 mb-3">
+  {% set cards = [
+    ("Всего пользователей", stats.total_users, "bi-people-fill", "#e8f0ff", "#0D9488"),
+    ("Активные", stats.active_users, "bi-person-check-fill", "#e6f9f0", "#1db87a"),
+    ("Заблокированные", stats.blocked_users, "bi-person-x-fill", "#fff0f0", "#e85454"),
+  ] %}
+  {% for label, val, icon, bg, color in cards %}
+  <div class="col-md-4">
+    <div class="card stat-card p-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon" style="background:{{ bg }};color:{{ color }};"><i class="bi {{ icon }}"></i></div>
+        <div>
+          <div class="stat-num">{{ val }}</div>
+          <div class="stat-label">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Stats Row 2: Listings -->
+<div class="row g-3 mb-3">
+  {% set cards2 = [
+    ("Всего объявлений", stats.total_listings, "bi-card-list", "#fff8e6", "#f0a500"),
+    ("На модерации", stats.pending_listings, "bi-hourglass-split", "#fff0e6", "#f07000"),
+    ("Одобренные", stats.approved_listings, "bi-check-circle-fill", "#e6f9f0", "#1db87a"),
+    ("Отклонённые", stats.rejected_listings, "bi-x-circle-fill", "#fff0f0", "#e85454"),
+  ] %}
+  {% for label, val, icon, bg, color in cards2 %}
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon" style="background:{{ bg }};color:{{ color }};"><i class="bi {{ icon }}"></i></div>
+        <div>
+          <div class="stat-num">{{ val }}</div>
+          <div class="stat-label">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Stats Row 3: Revenue + activity -->
+<div class="row g-3 mb-4">
+  {% set cards3 = [
+    ("Репортов (открыто)", stats.open_reports, "bi-flag-fill", "#fff0f5", "#d63384"),
+    ("Платежей всего", stats.total_payments, "bi-credit-card-fill", "#e8f0ff", "#0D9488"),
+    ("Выручка", stats.total_revenue|round(0)|int|string + " ₸", "bi-cash-stack", "#e6f9f0", "#1db87a"),
+    ("Активных промо", stats.active_promotions, "bi-rocket-fill", "#fff8e6", "#f0a500"),
+    ("Сообщений", stats.total_messages, "bi-chat-dots-fill", "#eff6ff", "#3b82f6"),
+  ] %}
+  {% for label, val, icon, bg, color in cards3 %}
+  <div class="col">
+    <div class="card stat-card p-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon" style="background:{{ bg }};color:{{ color }};"><i class="bi {{ icon }}"></i></div>
+        <div>
+          <div class="stat-num" style="font-size:1.3rem;">{{ val }}</div>
+          <div class="stat-label">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Quick actions -->
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card stat-card p-4">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-lightning-fill text-warning me-1"></i> Быстрые действия</h6>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/admin/listings?status=pending_review" class="btn btn-sm btn-outline-warning">
+          <i class="bi bi-hourglass-split"></i> Очередь модерации
+          {% if stats.pending_listings > 0 %}<span class="badge bg-warning text-dark ms-1">{{ stats.pending_listings }}</span>{% endif %}
+        </a>
+        <a href="/admin/reports?status=open" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-flag"></i> Открытые репорты
+          {% if stats.open_reports > 0 %}<span class="badge bg-danger ms-1">{{ stats.open_reports }}</span>{% endif %}
+        </a>
+        <a href="/admin/users" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-people"></i> Пользователи
+        </a>
+        <a href="/admin/payments" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-credit-card"></i> Платежи
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card stat-card p-4">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle text-primary me-1"></i> Статус платформы</h6>
+      <div class="d-flex flex-column gap-2" style="font-size:.875rem;">
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Конверсий (чаты)</span>
+          <span class="fw-semibold">{{ stats.total_conversations }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Сообщений всего</span>
+          <span class="fw-semibold">{{ stats.total_messages }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Активных промо</span>
+          <span class="fw-semibold text-success">{{ stats.active_promotions }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

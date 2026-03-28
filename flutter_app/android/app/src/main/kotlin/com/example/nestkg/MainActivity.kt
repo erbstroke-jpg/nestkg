@@ -1,0 +1,5 @@
+package com.example.nestkg
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

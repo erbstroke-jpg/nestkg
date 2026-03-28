@@ -1,0 +1,101 @@
+{% extends "admin/base.html" %}
+{% set active_page = "categories" %}
+{% block title %}Категории — NestKG Admin{% endblock %}
+{% block page_title %}Управление категориями{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-8">
+    <div class="table-card">
+      <table class="table table-hover">
+        <thead><tr><th>Порядок</th><th>EN</th><th>RU</th><th>Slug</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>
+          {% for cat in categories %}
+          <tr>
+            <td class="text-muted">{{ cat.display_order }}</td>
+            <td class="fw-semibold">{{ cat.name_en }}</td>
+            <td>{{ cat.name_ru }}</td>
+            <td><code style="font-size:.8rem;">{{ cat.slug }}</code></td>
+            <td>
+              {% if cat.is_active %}
+                <span class="badge bg-success badge-status">Активна</span>
+              {% else %}
+                <span class="badge bg-secondary badge-status">Отключена</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <form method="post" action="/admin/categories/{{ cat.id }}/toggle" class="d-inline">
+                  <button class="btn btn-sm py-0 px-2 {{ 'btn-outline-secondary' if cat.is_active else 'btn-outline-success' }}">
+                    {{ 'Выкл' if cat.is_active else 'Вкл' }}
+                  </button>
+                </form>
+                <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editModal{{ cat.id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </div>
+
+              <div class="modal fade" id="editModal{{ cat.id }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header py-2"><h6 class="modal-title">Редактировать категорию</h6></div>
+                    <form method="post" action="/admin/categories/{{ cat.id }}/edit">
+                      <div class="modal-body">
+                        <div class="mb-2">
+                          <label class="form-label form-label-sm">Название EN</label>
+                          <input type="text" name="name_en" value="{{ cat.name_en }}" class="form-control form-control-sm" required/>
+                        </div>
+                        <div class="mb-2">
+                          <label class="form-label form-label-sm">Название RU</label>
+                          <input type="text" name="name_ru" value="{{ cat.name_ru }}" class="form-control form-control-sm" required/>
+                        </div>
+                        <div>
+                          <label class="form-label form-label-sm">Порядок</label>
+                          <input type="number" name="display_order" value="{{ cat.display_order }}" class="form-control form-control-sm"/>
+                        </div>
+                      </div>
+                      <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-4">Нет категорий</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card stat-card p-4">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-plus-circle me-1 text-primary"></i> Новая категория</h6>
+      <form method="post" action="/admin/categories/create">
+        <div class="mb-2">
+          <label class="form-label form-label-sm fw-semibold">Название EN *</label>
+          <input type="text" name="name_en" class="form-control form-control-sm" placeholder="Cars" required/>
+        </div>
+        <div class="mb-2">
+          <label class="form-label form-label-sm fw-semibold">Название RU *</label>
+          <input type="text" name="name_ru" class="form-control form-control-sm" placeholder="Недвижимость" required/>
+        </div>
+        <div class="mb-2">
+          <label class="form-label form-label-sm fw-semibold">Slug *</label>
+          <input type="text" name="slug" class="form-control form-control-sm" placeholder="cars" required/>
+          <div class="form-text">Латиница, без пробелов</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label form-label-sm fw-semibold">Порядок</label>
+          <input type="number" name="display_order" value="0" class="form-control form-control-sm"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-plus"></i> Создать</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

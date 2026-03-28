@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+{% set active_page = "audit" %}
+{% block title %}Аудит-лог — NestKG Admin{% endblock %}
+{% block page_title %}Аудит-лог{% endblock %}
+
+{% block content %}
+<div class="table-card">
+  <table class="table table-hover">
+    <thead>
+      <tr><th>Время</th><th>Администратор</th><th>Действие</th><th>Тип объекта</th><th>ID объекта</th><th>Заметка</th></tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td style="font-size:.8rem;white-space:nowrap;">{{ log.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td>#{{ log.admin_id }}</td>
+        <td>
+          {% set action_colors = {
+            'listing_approved': 'success',
+            'listing_rejected': 'danger',
+            'listing_archived': 'secondary',
+            'user_suspended': 'danger',
+            'user_unsuspended': 'success',
+            'report_resolved': 'success',
+            'report_dismissed': 'secondary',
+            'category_created': 'primary',
+            'category_enabled': 'success',
+            'category_disabled': 'secondary',
+            'package_created': 'primary',
+            'promotion_deactivated': 'warning',
+          } %}
+          <span class="badge bg-{{ action_colors.get(log.action, 'light') }} {% if action_colors.get(log.action, 'light') == 'light' %}text-dark{% endif %} badge-status">
+            {{ log.action }}
+          </span>
+        </td>
+        <td style="font-size:.8rem;">{{ log.target_type or '—' }}</td>
+        <td style="font-size:.8rem;">
+          {% if log.target_type == 'listing' and log.target_id %}
+            <a href="/admin/listings/{{ log.target_id }}">#{{ log.target_id }}</a>
+          {% elif log.target_type == 'user' and log.target_id %}
+            <a href="/admin/users/{{ log.target_id }}">#{{ log.target_id }}</a>
+          {% else %}
+            {{ log.target_id or '—' }}
+          {% endif %}
+        </td>
+        <td style="font-size:.8rem;color:#6b7a99;">{{ log.note or '' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">Аудит-лог пуст</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% for p in range(1, total_pages + 1) %}
+    <li class="page-item {{ 'active' if p == page else '' }}">
+      <a class="page-link" href="/admin/audit-log?page={{ p }}">{{ p }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "admin/base.html" %}
+{% set active_page = "promotions" %}
+{% block title %}Промо — NestKG Admin{% endblock %}
+{% block page_title %}Управление промо{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-md-5">
+    <div class="card stat-card">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-box me-1 text-primary"></i> Пакеты промо</h6>
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newPackageModal">
+          <i class="bi bi-plus"></i> Новый
+        </button>
+      </div>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>EN</th><th>RU</th><th>Цена</th><th>Дней</th><th>Тип</th></tr></thead>
+        <tbody>
+          {% for pkg in packages %}
+          <tr>
+            <td class="fw-semibold">{{ pkg.name_en }}</td>
+            <td>{{ pkg.name_ru }}</td>
+            <td>{{ pkg.price }}</td>
+            <td>{{ pkg.duration_days }}</td>
+            <td><span class="badge bg-light text-dark">{{ pkg.promotion_type.value }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-muted py-3">Нет пакетов</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card stat-card">
+      <div class="p-3 border-bottom">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-rocket me-1 text-success"></i> Активные промо ({{ active_promos|length }})</h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Листинг</th><th>Юзер</th><th>До</th><th>Статус</th><th></th></tr></thead>
+          <tbody>
+            {% for p in active_promos %}
+            <tr>
+              <td><a href="/admin/listings/{{ p.listing_id }}">#{{ p.listing_id }}</a></td>
+              <td>#{{ p.user_id }}</td>
+              <td style="font-size:.78rem;">{{ p.ends_at.strftime('%d.%m.%Y') if p.ends_at else '—' }}</td>
+              <td><span class="badge bg-success badge-status">{{ p.status.value }}</span></td>
+              <td>
+                <form method="post" action="/admin/promotions/{{ p.id }}/deactivate" class="d-inline">
+                  <button class="btn btn-xs btn-outline-danger btn-sm py-0 px-2" onclick="return confirm('Деактивировать?')">Стоп</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-3">Нет активных промо</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card stat-card">
+  <div class="p-3 border-bottom"><h6 class="mb-0 fw-semibold text-muted"><i class="bi bi-clock-history me-1"></i> Завершённые промо</h6></div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Листинг</th><th>Юзер</th><th>Начало</th><th>Конец</th><th>Статус</th></tr></thead>
+      <tbody>
+        {% for p in expired_promos %}
+        <tr>
+          <td><a href="/admin/listings/{{ p.listing_id }}">#{{ p.listing_id }}</a></td>
+          <td>#{{ p.user_id }}</td>
+          <td style="font-size:.78rem;">{{ p.starts_at.strftime('%d.%m.%Y') if p.starts_at else '—' }}</td>
+          <td style="font-size:.78rem;">{{ p.ends_at.strftime('%d.%m.%Y') if p.ends_at else '—' }}</td>
+          <td><span class="badge bg-secondary badge-status">{{ p.status.value }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-3">Нет записей</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- New Package Modal -->
+<div class="modal fade" id="newPackageModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Новый пакет промо</h5></div>
+      <form method="post" action="/admin/promotions/packages/create">
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-semibold">Название EN *</label>
+              <input type="text" name="name_en" class="form-control form-control-sm" placeholder="Standard 7 days" required/>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-semibold">Название RU *</label>
+              <input type="text" name="name_ru" class="form-control form-control-sm" placeholder="Стандарт 7 дней" required/>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-semibold">Цена *</label>
+              <input type="number" name="price" step="0.01" class="form-control form-control-sm" placeholder="990" required/>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-semibold">Кол-во дней *</label>
+              <input type="number" name="duration_days" class="form-control form-control-sm" placeholder="7" required/>
+            </div>
+            <div class="col-12">
+              <label class="form-label form-label-sm fw-semibold">Тип промо</label>
+              <select name="promotion_type" class="form-select form-select-sm">
+                <option value="featured">featured — выделить</option>
+                <option value="boosted">boosted — поднять в топ</option>
+                <option value="top_of_feed">top_of_feed — вверх ленты</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-primary btn-sm">Создать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "admin/base.html" %}
+{% set active_page = "listings" %}
+{% block title %}Объявление #{{ listing.id }} — NestKG Admin{% endblock %}
+{% block page_title %}Объявление #{{ listing.id }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="/admin/listings" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Назад к списку</a>
+</div>
+
+<div class="row g-3">
+  <!-- Listing info -->
+  <div class="col-md-8">
+    <div class="card stat-card p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <h5 class="fw-bold mb-0">{{ listing.title }}</h5>
+        {% if listing.status == 'pending_review' %}<span class="badge bg-warning text-dark">На модерации</span>
+        {% elif listing.status == 'approved' %}<span class="badge bg-success">Одобрено</span>
+        {% elif listing.status == 'rejected' %}<span class="badge bg-danger">Отклонено</span>
+        {% else %}<span class="badge bg-secondary">{{ listing.status }}</span>{% endif %}
+      </div>
+
+      <table class="table table-sm" style="font-size:.875rem;">
+        <tr><td class="text-muted" style="width:130px;">Цена</td><td class="fw-semibold">{{ listing.price }} {{ listing.currency if listing.currency is defined else '₸' }}</td></tr>
+        <tr><td class="text-muted">Город</td><td>{{ listing.city or '—' }}</td></tr>
+        <tr><td class="text-muted">Категория</td><td>{{ listing.category_id }}</td></tr>
+        <tr><td class="text-muted">Создано</td><td>{{ listing.created_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+        {% if listing.published_at is defined and listing.published_at %}
+        <tr><td class="text-muted">Опубликовано</td><td>{{ listing.published_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+        {% endif %}
+        {% if listing.moderation_note is defined and listing.moderation_note %}
+        <tr><td class="text-muted">Заметка мод.</td><td class="text-danger">{{ listing.moderation_note }}</td></tr>
+        {% endif %}
+      </table>
+
+      {% if listing.description %}
+      <div class="mt-2">
+        <div class="text-muted mb-1" style="font-size:.8rem;font-weight:600;text-transform:uppercase;">Описание</div>
+        <p style="font-size:.875rem;">{{ listing.description }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Reports -->
+    {% if reports %}
+    <div class="card stat-card p-3">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-flag text-danger me-1"></i> Репорты на это объявление ({{ reports|length }})</h6>
+      {% for r in reports %}
+      <div class="border rounded p-2 mb-2" style="font-size:.85rem;">
+        <div class="d-flex justify-content-between">
+          <span><strong>{{ r.reason_code }}</strong> — от пользователя #{{ r.reporter_user_id }}</span>
+          <span class="badge bg-secondary">{{ r.status }}</span>
+        </div>
+        {% if r.reason_text %}<div class="text-muted mt-1">{{ r.reason_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Actions panel -->
+  <div class="col-md-4">
+    <!-- Owner -->
+    {% if owner %}
+    <div class="card stat-card p-3 mb-3">
+      <h6 class="fw-semibold mb-2"><i class="bi bi-person me-1"></i> Владелец</h6>
+      <div class="fw-semibold">{{ owner.full_name }}</div>
+      <div class="text-muted" style="font-size:.85rem;">{{ owner.email }}</div>
+      <div class="mt-2">
+        {% if owner.status.value == 'active' %}<span class="badge bg-success">Активен</span>
+        {% elif owner.status.value == 'blocked' %}<span class="badge bg-danger">Заблокирован</span>
+        {% else %}<span class="badge bg-secondary">{{ owner.status.value }}</span>{% endif %}
+      </div>
+      <a href="/admin/users/{{ owner.id }}" class="btn btn-sm btn-outline-secondary mt-2 w-100">Профиль</a>
+    </div>
+    {% endif %}
+
+    <!-- Moderation actions -->
+    <div class="card stat-card p-3">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-shield-check me-1"></i> Действия</h6>
+      <div class="d-flex flex-column gap-2">
+        {% if listing.status != 'approved' %}
+        <form method="post" action="/admin/listings/{{ listing.id }}/approve">
+          <button class="btn btn-success btn-sm w-100"><i class="bi bi-check-circle"></i> Одобрить</button>
+        </form>
+        {% endif %}
+
+        {% if listing.status != 'rejected' %}
+        <button class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+          <i class="bi bi-x-circle"></i> Отклонить
+        </button>
+        {% endif %}
+
+        {% if listing.status != 'archived' %}
+        <form method="post" action="/admin/listings/{{ listing.id }}/archive">
+          <button class="btn btn-secondary btn-sm w-100" onclick="return confirm('Архивировать объявление?')">
+            <i class="bi bi-archive"></i> Архивировать
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Отклонить объявление</h5></div>
+      <form method="post" action="/admin/listings/{{ listing.id }}/reject">
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Причина отклонения</label>
+          <textarea name="note" class="form-control" rows="3" placeholder="Укажите причину (отобразится в аудит-логе)..." required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-danger btn-sm">Отклонить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

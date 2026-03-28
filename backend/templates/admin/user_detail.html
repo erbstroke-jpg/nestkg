@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+{% set active_page = "users" %}
+{% block title %}{{ user.full_name }} — NestKG Admin{% endblock %}
+{% block page_title %}Пользователь #{{ user.id }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="/admin/users" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Назад</a>
+</div>
+
+<div class="row g-3">
+  <!-- Profile -->
+  <div class="col-md-4">
+    <div class="card stat-card p-4">
+      <div class="text-center mb-3">
+        {% if user.profile_image_url %}
+          <img src="{{ user.profile_image_url }}" class="rounded-circle" style="width:80px;height:80px;object-fit:cover;"/>
+        {% else %}
+          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" style="width:80px;height:80px;font-size:2rem;color:#6b7a99;">
+            <i class="bi bi-person"></i>
+          </div>
+        {% endif %}
+        <h5 class="mt-2 mb-0">{{ user.full_name }}</h5>
+        <div class="text-muted" style="font-size:.85rem;">{{ user.email }}</div>
+      </div>
+
+      <table class="table table-sm" style="font-size:.85rem;">
+        <tr><td class="text-muted">Статус</td>
+          <td>
+            {% if user.status.value == 'active' %}<span class="badge bg-success">Активен</span>
+            {% elif user.status.value == 'blocked' %}<span class="badge bg-danger">Заблокирован</span>
+            {% else %}<span class="badge bg-secondary">{{ user.status.value }}</span>{% endif %}
+          </td>
+        </tr>
+        <tr><td class="text-muted">Роль</td><td>{{ user.role.value }}</td></tr>
+        <tr><td class="text-muted">Телефон</td><td>{{ user.phone or '—' }}</td></tr>
+        <tr><td class="text-muted">Город</td><td>{{ user.city or '—' }}</td></tr>
+        <tr><td class="text-muted">Язык</td><td>{{ user.preferred_language.value }}</td></tr>
+        <tr><td class="text-muted">Зарегистрирован</td><td>{{ user.created_at.strftime('%d.%m.%Y') }}</td></tr>
+        {% if user.blocked_until %}
+        <tr><td class="text-muted">Блок до</td><td class="text-danger">{{ user.blocked_until.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+        {% endif %}
+      </table>
+
+      {% if user.bio %}<p class="text-muted" style="font-size:.85rem;">{{ user.bio }}</p>{% endif %}
+
+      <!-- Actions -->
+      {% if user.role.value != 'admin' %}
+      <div class="d-flex flex-column gap-2 mt-2">
+        {% if user.status.value == 'blocked' %}
+        <form method="post" action="/admin/users/{{ user.id }}/unsuspend">
+          <button class="btn btn-success btn-sm w-100"><i class="bi bi-person-check"></i> Разблокировать</button>
+        </form>
+        {% else %}
+        <button class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#suspendModal">
+          <i class="bi bi-person-x"></i> Заблокировать на 7 дней
+        </button>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Listings / Payments / Reports -->
+  <div class="col-md-8">
+    <div class="card stat-card mb-3">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-card-list me-1 text-primary"></i> Объявления</h6>
+        <a href="/admin/listings?owner_id={{ user.id }}" class="btn btn-xs btn-outline-primary btn-sm py-0">Все</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Заголовок</th><th>Статус</th><th>Цена</th><th>Дата</th></tr></thead>
+          <tbody>
+            {% for l in listings %}
+            <tr>
+              <td><a href="/admin/listings/{{ l.id }}" class="text-decoration-none">{{ l.title[:45] }}{% if l.title|length > 45 %}…{% endif %}</a></td>
+              <td><span class="badge bg-secondary badge-status">{{ l.status }}</span></td>
+              <td>{{ l.price }} {{ l.currency if l.currency is defined else '₸' }}</td>
+              <td style="font-size:.78rem;">{{ l.created_at.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-2">Нет объявлений</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card stat-card mb-3">
+      <div class="p-3 border-bottom"><h6 class="mb-0 fw-semibold"><i class="bi bi-credit-card me-1 text-success"></i> Последние платежи</h6></div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Сумма</th><th>Статус</th><th>Дата</th></tr></thead>
+          <tbody>
+            {% for p in payments %}
+            <tr>
+              <td class="fw-semibold">{{ p.amount }} {{ p.currency }}</td>
+              <td>
+                {% if p.status == 'success' %}<span class="badge bg-success badge-status">Успешно</span>
+                {% elif p.status == 'pending' %}<span class="badge bg-warning text-dark badge-status">Ожидает</span>
+                {% else %}<span class="badge bg-danger badge-status">{{ p.status }}</span>{% endif %}
+              </td>
+              <td style="font-size:.78rem;">{{ p.created_at.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-2">Нет платежей</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card stat-card">
+      <div class="p-3 border-bottom"><h6 class="mb-0 fw-semibold"><i class="bi bi-flag me-1 text-danger"></i> Поданные репорты</h6></div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Тип</th><th>Причина</th><th>Статус</th><th>Дата</th></tr></thead>
+          <tbody>
+            {% for r in reports_filed %}
+            <tr>
+              <td>{{ r.target_type }}</td>
+              <td>{{ r.reason_code }}</td>
+              <td><span class="badge bg-secondary badge-status">{{ r.status }}</span></td>
+              <td style="font-size:.78rem;">{{ r.created_at.strftime('%d.%m.%Y') }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-2">Нет репортов</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Suspend Modal -->
+<div class="modal fade" id="suspendModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Заблокировать пользователя</h5></div>
+      <form method="post" action="/admin/users/{{ user.id }}/suspend">
+        <div class="modal-body">
+          <p class="text-muted" style="font-size:.875rem;">Пользователь будет заблокирован на <strong>7 дней</strong>.</p>
+          <textarea name="note" class="form-control form-control-sm" placeholder="Причина (опционально)" rows="2"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-sm btn-danger">Заблокировать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}NestKG Admin{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root { --sidebar-w: 240px; }
+    body { background: #f4f6fb; }
+
+    /* Sidebar */
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w); background: #0f2b26;
+      display: flex; flex-direction: column; z-index: 100;
+    }
+    #sidebar .brand {
+      padding: 1.25rem 1.5rem;
+      font-size: 1.1rem; font-weight: 700;
+      color: #fff; border-bottom: 1px solid #1a3f38;
+      text-decoration: none; display: block;
+    }
+    #sidebar .brand span { color: #0D9488; }
+    #sidebar nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; }
+    #sidebar nav a {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.6rem 1.5rem; color: #9aa5be;
+      text-decoration: none; font-size: 0.875rem;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    #sidebar nav a:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    #sidebar nav a.active {
+      color: #fff; background: rgba(13,148,136,0.15);
+      border-left-color: #0D9488;
+    }
+    #sidebar nav a i { font-size: 1rem; min-width: 1.2rem; }
+    #sidebar .sidebar-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid #1a3f38;
+      font-size: 0.8rem; color: #6b7a99;
+    }
+
+    /* Main */
+    #main { margin-left: var(--sidebar-w); min-height: 100vh; }
+    #topbar {
+      background: #fff; border-bottom: 1px solid #e5e9f2;
+      padding: 0.75rem 1.75rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #topbar h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
+    .content { padding: 1.75rem; }
+
+    /* Cards */
+    .stat-card {
+      border-radius: 12px; border: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .stat-card .stat-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+    .stat-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 0.8rem; color: #6b7a99; margin-top: 2px; }
+
+    /* Tables */
+    .table-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+    .table thead th { background: #f8f9fc; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7a99; border-bottom: 1px solid #e5e9f2; }
+    .table td { vertical-align: middle; font-size: 0.875rem; }
+    .table-card .table { margin: 0; }
+
+    /* Badges */
+    .badge-status { font-size: 0.72rem; padding: 0.3em 0.65em; border-radius: 6px; }
+
+    /* Flash */
+    .flash-bar { border-radius: 0; border: none; margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <a class="brand" href="/admin/dashboard">Nest<span>KG</span> <small class="text-muted" style="font-weight:400;font-size:.7rem;">Admin</small></a>
+  <nav>
+    <a href="/admin/dashboard" class="{{ 'active' if active_page == 'dashboard' else '' }}">
+      <i class="bi bi-speedometer2"></i> Дашборд
+    </a>
+    <a href="/admin/users" class="{{ 'active' if active_page == 'users' else '' }}">
+      <i class="bi bi-people"></i> Пользователи
+    </a>
+    <a href="/admin/listings?status=pending_review" class="{{ 'active' if active_page == 'listings' else '' }}">
+      <i class="bi bi-card-list"></i> Объявления
+    </a>
+    <a href="/admin/reports" class="{{ 'active' if active_page == 'reports' else '' }}">
+      <i class="bi bi-flag"></i> Репорты
+    </a>
+    <a href="/admin/categories" class="{{ 'active' if active_page == 'categories' else '' }}">
+      <i class="bi bi-tags"></i> Категории
+    </a>
+    <a href="/admin/promotions" class="{{ 'active' if active_page == 'promotions' else '' }}">
+      <i class="bi bi-rocket"></i> Промо
+    </a>
+    <a href="/admin/payments" class="{{ 'active' if active_page == 'payments' else '' }}">
+      <i class="bi bi-credit-card"></i> Платежи
+    </a>
+    <a href="/admin/audit-log" class="{{ 'active' if active_page == 'audit' else '' }}">
+      <i class="bi bi-journal-text"></i> Аудит-лог
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <i class="bi bi-person-circle"></i> {{ admin.full_name }}<br>
+    <a href="/admin/logout" class="text-danger text-decoration-none" style="font-size:.8rem;"><i class="bi bi-box-arrow-left"></i> Выйти</a>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topbar">
+    <h1>{% block page_title %}{% endblock %}</h1>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-muted" style="font-size:.8rem;"><i class="bi bi-clock"></i> {{ now.strftime('%d.%m.%Y %H:%M') if now is defined else '' }}</span>
+    </div>
+  </div>
+
+  {% if flash %}
+  <div class="alert alert-{{ flash.category }} flash-bar alert-dismissible" role="alert">
+    {{ flash.message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
